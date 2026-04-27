@@ -75,12 +75,6 @@ This forces the Warden to be careful — every adjustment risks unraveling the o
 ### The Hidden Laws (Validation Rules)
 
 The four selected schools (one per ring, outer → inner) must satisfy:
-
-| Rule | Constraint |
-|------|------------|
-| **Anchor** | The outer ring must be **Divination** (truth) |
-| **Flow Chain** | Divination → Illusion → Transmutation → Abjuration must appear in this relative order across the rings |
-
 The hardcoded solution: **Divination · Illusion · Transmutation · Abjuration** (outer → inner).
 
 This decodes the Warden's riddle:
@@ -89,20 +83,12 @@ This decodes the Warden's riddle:
 - *"change"* = Transmutation (R3)
 - *"protection over power"* = Abjuration over Evocation (R4)
 
-The categories of each school (kept for reference / lore):
-- **Stabilizer:** Abjuration, Transmutation
-- **Destructive:** Evocation, Necromancy
-- **Mental:** Enchantment, Illusion
-- **Utility:** Conjuration, Divination
-
 ### Failure Hints
 
 When validation fails, the server reveals 1–2 partial hints (never all rule violations at once). After 5+ failed attempts, an extra hint is included. Example hints:
 
 - *"The flow of magic is disrupted. The current does not run true."*
 - *"The outer ring must hold truth — only sight can begin the weave."*
-
-If only one rule is broken, all rings glow gold — the players are close.
 
 ## DM Console
 
@@ -142,7 +128,10 @@ Server behavior is controlled by `config.json` in the project root. Edit and res
   "channelTimeoutMs": 10000,
   "scatterDelayMs": 1500,
   "disconnectGraceMs": 3000,
-  "wardenSpinChance": 1.0
+  "wardenSpinChance": 1.0,
+  "solution": ["Divination", "Illusion", "Transmutation", "Abjuration"],
+  "wardenRiddle": "The Weave broke when truth saw madness, sight became change, and the final hand chose protection over power.",
+  "failureHints": { "...": "see below" }
 }
 ```
 
@@ -153,6 +142,9 @@ Server behavior is controlled by `config.json` in the project root. Edit and res
 | `scatterDelayMs` | `1500` | Delay (ms) between a failed channel attempt and the random scatter of the rings. Gives players time to read the failure hint. |
 | `disconnectGraceMs` | `3000` | Time (ms) a disconnected player's role is held before being freed for someone else. Allows brief WiFi drops or page reloads. |
 | `wardenSpinChance` | `1.0` | Probability (0.0–1.0) that the Warden's curse triggers on each rotation. At `1.0` every Warden rotation spins 1–3 other rings. Lower it (e.g. `0.5`) to make the Warden's effect less constant. |
+| `solution` | `["Divination", "Illusion", "Transmutation", "Abjuration"]` | Target school for each ring (outer→inner). Change this to use a different solution. School names must match the canonical 8 schools (Abjuration, Conjuration, Divination, Enchantment, Evocation, Illusion, Necromancy, Transmutation). |
+| `wardenRiddle` | *(see config.json)* | The cryptic riddle shown to the Warden as a hint toward the solution. Customize this to match your puzzle's flavor. |
+| `failureHints` | *(see config.json)* | Map of rule-violation keys to hint text shown after a failed attempt. Keys: `balance_stabilizer`, `balance_destructive`, `flow_broken`, `forbidden_adjacency`, `anchor_invalid`, `opposing_mirror_13`, `opposing_mirror_24`, `channel_not_unified`. Override any subset; missing keys fall back to defaults. |
 
 If `config.json` is missing or invalid, the server falls back to the defaults above and logs a notice on startup.
 

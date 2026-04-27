@@ -59,9 +59,14 @@ const Client = (() => {
           ringSchools: msg.ringSchools,
           auraColors: msg.auraColors,
           categories: msg.categories,
+          wardenRiddle: msg.wardenRiddle || gameData?.wardenRiddle,
         };
         currentRings = msg.rings;
         updatePlayerDots(msg.players);
+        // Re-render role info if it depends on the riddle (Warden)
+        if (myRole === 'warden' && document.getElementById('role-info')) {
+          Roles.renderInfo(myRole, document.getElementById('role-info'), gameData.wardenRiddle);
+        }
         renderRings();
         break;
 
@@ -121,7 +126,7 @@ const Client = (() => {
     document.getElementById('role-ring').textContent = `Ring ${assignment.ringIndex + 1} (${['Outer', 'Second', 'Third', 'Inner'][assignment.ringIndex]})`;
 
     // Role-specific info
-    Roles.renderInfo(myRole, document.getElementById('role-info'));
+    Roles.renderInfo(myRole, document.getElementById('role-info'), gameData?.wardenRiddle);
     Roles.applyTheme(myRole);
 
     // Init rings after layout reflow so offsetWidth is correct

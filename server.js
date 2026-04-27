@@ -13,13 +13,27 @@ const DEFAULT_CONFIG = {
   scatterDelayMs: 1500,
   disconnectGraceMs: 3000,
   wardenSpinChance: 1.0,
+  solution: ['Divination', 'Illusion', 'Transmutation', 'Abjuration'],
+  wardenRiddle: 'The Weave broke when truth saw madness, sight became change, and the final hand chose protection over power.',
+  failureHints: {
+    balance_stabilizer: 'The weave lacks stability — it needs an anchor.',
+    balance_destructive: 'Destructive forces have no place here. Choose protection over power.',
+    flow_broken: 'The flow of magic is disrupted. The current does not run true.',
+    forbidden_adjacency: 'Death and destruction strain against each other. They must not touch.',
+    anchor_invalid: 'The outer ring must hold truth — only sight can begin the weave.',
+    opposing_mirror_13: 'The first and third rings echo each other. Symmetry breeds instability.',
+    opposing_mirror_24: 'The second and fourth rings mirror too closely.',
+    channel_not_unified: 'The channel was not unified. All must commit together.',
+  },
 };
 
 let config = { ...DEFAULT_CONFIG };
 try {
   const userConfig = JSON.parse(fs.readFileSync(path.join(__dirname, 'config.json'), 'utf8'));
   config = { ...DEFAULT_CONFIG, ...userConfig };
-  console.log('Loaded config:', config);
+  // Merge failureHints deeply so partial overrides work
+  config.failureHints = { ...DEFAULT_CONFIG.failureHints, ...(userConfig.failureHints || {}) };
+  console.log('Loaded config from config.json');
 } catch (e) {
   console.log('Using default config (config.json not found or invalid)');
 }
@@ -29,6 +43,9 @@ const CHANNEL_TIMEOUT_MS = config.channelTimeoutMs;
 const SCATTER_DELAY_MS = config.scatterDelayMs;
 const DISCONNECT_GRACE_MS = config.disconnectGraceMs;
 const WARDEN_SPIN_CHANCE = config.wardenSpinChance;
+const SOLUTION_SCHOOLS_CONFIG = config.solution;
+const WARDEN_RIDDLE = config.wardenRiddle;
+const HINTS = config.failureHints;
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -54,8 +71,8 @@ const ROLE_NAMES = {
 };
 
 // Each ring has schools in a different random order.
-// The solution target schools: Ring1=Conjuration, Ring2=Divination, Ring3=Transmutation, Ring4=Evocation
-const SOLUTION_SCHOOLS = ['Divination', 'Illusion', 'Transmutation', 'Abjuration'];
+// Solution schools loaded from config.json (target school for each ring, outer→inner).
+const SOLUTION_SCHOOLS = SOLUTION_SCHOOLS_CONFIG;
 
 // Seeded shuffle for reproducibility (Fisher-Yates with a simple seed)
 function seededShuffle(arr, seed) {
@@ -146,15 +163,6 @@ function validate(rings) {
   return errors;
 }
 
-const HINTS = {
-  balance_stabilizer: 'The weave lacks stability \u2014 it needs an anchor.',
-  balance_destructive: 'Destructive forces have no place here. Choose protection over power.',
-  flow_broken: 'The flow of magic is disrupted. The current does not run true.',
-  forbidden_adjacency: 'Death and destruction strain against each other. They must not touch.',
-  anchor_invalid: 'The outer ring must hold truth — only sight can begin the weave.',
-  opposing_mirror_13: 'The first and third rings echo each other. Symmetry breeds instability.',
-  opposing_mirror_24: 'The second and fourth rings mirror too closely.',
-};
 
 // ── Test Mode ──────────────────────────────────────────────────────────────────
 
@@ -276,6 +284,7 @@ function getStateForClient() {
     ringSchools: RING_SCHOOLS,
     categories: CATEGORIES,
     auraColors: AURA_COLORS,
+    wardenRiddle: WARDEN_RIDDLE,
     solution: null, // never sent to players
   };
 }
@@ -368,7 +377,7 @@ function resolveChannel() {
     broadcastAll({
       type: 'channel_result',
       success: false,
-      hint: 'The channel was not unified. All must commit together.',
+      hint: HINTS.channel_not_unified,
       nearSuccess: false,
     });
     scatterRings();
@@ -392,14 +401,13 @@ function resolveChannel() {
   gameState.phase = 'playing';
   const hintsToSend = errors.slice(0, gameState.attemptCount >= 5 ? 3 : 2);
   const hintTexts = hintsToSend.map(e => HINTS[e]);
-  const nearSuccess = errors.length === 1;
 
   addLog(`Channel attempt #${gameState.attemptCount} failed — ${errors.length} rule(s) broken`);
   broadcastAll({
     type: 'channel_result',
     success: false,
     hints: hintTexts,
-    nearSuccess,
+    nearSuccess: false,
     errorCount: errors.length,
   });
 

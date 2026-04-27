@@ -28,7 +28,7 @@ const Roles = (() => {
 
   let shimmerInterval = null;
 
-  function renderInfo(role, container) {
+  function renderInfo(role, container, wardenRiddle) {
     container.innerHTML = '';
 
     // Role description
@@ -38,10 +38,10 @@ const Roles = (() => {
     desc.textContent = ROLE_DESCRIPTIONS[role] || '';
     container.appendChild(desc);
 
-    if (role === 'warden') {
+    if (role === 'warden' && wardenRiddle) {
       const hint = document.createElement('div');
       hint.className = 'rule-card warden-hint';
-      hint.textContent = 'The Weave broke when truth saw madness, sight became change, and the final hand chose protection over power.';
+      hint.textContent = wardenRiddle;
       container.appendChild(hint);
     }
   }
