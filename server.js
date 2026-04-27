@@ -113,7 +113,7 @@ for (const [school, cat] of Object.entries(CATEGORIES)) {
 
 const gameState = {
   players: {},        // token -> { ws, role, ringIndex, connected }
-  rings: [0, 0, 0, 0],
+  rings: Array.from({ length: 4 }, () => Math.floor(Math.random() * 8)),
   phase: 'waiting',   // waiting | playing | channeling | success
   attemptCount: 0,
   log: [],
@@ -601,6 +601,12 @@ function handleDmMessage(ws, msg) {
 // ── Start Server ───────────────────────────────────────────────────────────────
 
 function getLocalIP() {
+  // Allow the host IP to be injected from outside (e.g. when running inside a
+  // Docker container, where os.networkInterfaces() only sees the container's
+  // private IP and the QR code / printed URLs would otherwise be unreachable).
+  if (process.env.HOST_IP) {
+    return process.env.HOST_IP;
+  }
   const interfaces = os.networkInterfaces();
   for (const iface of Object.values(interfaces)) {
     for (const info of iface) {
