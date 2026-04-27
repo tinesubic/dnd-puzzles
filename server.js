@@ -396,6 +396,17 @@ function resolveChannel() {
     nearSuccess,
     errorCount: errors.length,
   });
+
+  // Punish failure: randomly rotate all rings to scatter the alignment
+  setTimeout(() => {
+    for (let r = 0; r < 4; r++) {
+      gameState.rings[r] = Math.floor(Math.random() * 8);
+    }
+    addLog('The Weave convulses — the rings scatter');
+    broadcastAll({ type: 'ring_update', rings: gameState.rings });
+    pushDmState();
+  }, 1500);
+
   pushDmState();
 }
 

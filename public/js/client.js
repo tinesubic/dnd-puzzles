@@ -207,6 +207,9 @@ const Client = (() => {
   function handleFailure(msg) {
     document.body.classList.remove('near-success');
 
+    // Play breaking crystal sound
+    playCrystalBreak();
+
     // Shake effect
     document.body.classList.add('shake');
     setTimeout(() => document.body.classList.remove('shake'), 500);
@@ -222,6 +225,71 @@ const Client = (() => {
     } else {
       showStatus('The weave rejects the alignment.');
     }
+  }
+
+  // ── Audio ──
+
+  let audioCtx = null;
+  const crackSound = new Audio('/audio/glass-crack.mp3');
+  crackSound.preload = 'auto';
+
+  function playCrystalBreak() {
+    // Play the real glass cracking sample
+    try {
+      const sound = crackSound.cloneNode();
+      sound.volume = 1.0;
+      sound.play().catch(() => {});
+    } catch (e) {}
+
+    // Layer with a deep rumble for body
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+
+      const now = audioCtx.currentTime;
+      const dest = audioCtx.destination;
+
+      // Sub-bass boom
+      const sub = audioCtx.createOscillator();
+      sub.type = 'sine';
+      sub.frequency.setValueAtTime(55, now);
+      sub.frequency.exponentialRampToValueAtTime(25, now + 0.7);
+      const subGain = audioCtx.createGain();
+      subGain.gain.setValueAtTime(0.8, now);
+      subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.9);
+      sub.connect(subGain).connect(dest);
+      sub.start(now);
+      sub.stop(now + 1);
+
+      // Body thump
+      const thump = audioCtx.createOscillator();
+      thump.type = 'sine';
+      thump.frequency.setValueAtTime(120, now);
+      thump.frequency.exponentialRampToValueAtTime(45, now + 0.3);
+      const thumpGain = audioCtx.createGain();
+      thumpGain.gain.setValueAtTime(0.5, now);
+      thumpGain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+      thump.connect(thumpGain).connect(dest);
+      thump.start(now);
+      thump.stop(now + 0.5);
+
+      // Lowpassed noise rumble (the slow decaying body)
+      const noiseBuf = audioCtx.createBuffer(1, audioCtx.sampleRate * 1.5, audioCtx.sampleRate);
+      const data = noiseBuf.getChannelData(0);
+      for (let i = 0; i < data.length; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / data.length, 0.8);
+      }
+      const rumble = audioCtx.createBufferSource();
+      rumble.buffer = noiseBuf;
+      const rumbleFilter = audioCtx.createBiquadFilter();
+      rumbleFilter.type = 'lowpass';
+      rumbleFilter.frequency.value = 350;
+      const rumbleGain = audioCtx.createGain();
+      rumbleGain.gain.setValueAtTime(0.5, now);
+      rumbleGain.gain.exponentialRampToValueAtTime(0.001, now + 1.3);
+      rumble.connect(rumbleFilter).connect(rumbleGain).connect(dest);
+      rumble.start(now);
+    } catch (e) {}
   }
 
   function showStatus(text, isHint) {
