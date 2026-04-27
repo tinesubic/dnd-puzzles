@@ -40,28 +40,22 @@ But no single player can solve it alone: each one perceives the Weave through a 
 #### 🜂 The Arcanist — *Truth*
 > *"You see the true names of magic. Trust your eyes — but you alone cannot solve this."*
 
-The Arcanist controls the **outer ring** and is the only player who can read the school name labels — but only on their own ring. They see the rune for the currently selected school appear in a purple pill above the Channel button, telling them exactly which school they're aligned to.
-
-The Arcanist is the **translator**. They communicate verbally with the others to identify which glyphs match which schools, since the others see only runes.
+The Arcanist controls the **outer ring** and is the only player who can read the school name labels — but only on their own ring. They see the rune for the currently selected school appear in a purple pill above the Channel button, telling them exactly which school they're aligned to. The Arcanist is the **translator**.
 
 #### 🜄 The Distorted Mind — *Corruption*
 > *"The Weave distorts your vision."*
 
 The Distorted Mind controls the **second ring**. Their reality is unstable: every 5 seconds, **4 random glyphs on their ring are replaced by glitching crystals**, hiding the runes underneath. They must wait for the corruption to shift before they can see what's actually on their ring.
 
-This player must be patient and call out glyphs as they come into focus, often guessing at what's hidden.
-
 #### 🜁 The Seer — *Awareness*
 > *"You perceive the magic permeating the rings. The names are hidden, but your awareness is limitless."*
 
-The Seer controls the **third ring** but sees **every glyph on every ring**. They are the only player with full visibility of the puzzle's current state. The names of the schools are still hidden — they must rely on the Arcanist's translations to know what each glyph means.
-
-The Seer's role is **strategic coordination**: cross-referencing what the Arcanist describes with what they can see across all rings.
+The Seer controls the **third ring** but sees **every glyph on every ring**. They are the only player with full visibility of the puzzle's current state. The names of the schools are still hidden,
 
 #### 🜃 The Warden — *Binding*
 > *"You bind the Weave, but it answers in kind — each turn of your ring sends ripples through the others, shifting their alignment."*
 
-The Warden controls the **inner ring**. Their power is also their curse: every time they rotate their ring by one position, **other rings are randomly shifted by 1–3 positions** in random directions.
+The Warden controls the **inner ring**. Every time they rotate their ring by one position, **other rings are randomly shifted by 1–3 positions** in random directions.
 
 The Warden is also the keeper of a cryptic riddle that hints at the solution:
 > *"The Weave broke when truth saw madness, sight became change, and the final hand chose protection over power."*
@@ -85,14 +79,7 @@ This decodes the Warden's riddle:
 - *"truth"* = Divination (R1)
 - *"madness"* = Illusion (R2)
 - *"change"* = Transmutation (R3)
-- *"protection over power"* = Abjuration over Evocation (R4)
-
-### Failure Hints
-
-When validation fails, the server reveals 1–2 partial hints (never all rule violations at once). After 5+ failed attempts, an extra hint is included. Example hints:
-
-- *"The flow of magic is disrupted. The current does not run true."*
-- *"The outer ring must hold truth — only sight can begin the weave."*
+- *"protection over power"* = Abjuration (R4)
 
 ## DM Console
 
@@ -116,11 +103,6 @@ You can test the entire puzzle alone on the host laptop — useful before runnin
 4. Drag in each ring tab to rotate, then press **Channel** in all four within the timeout window (default 10 s).
 5. Use the DM console to monitor state in real time. The DM tab also shows the correct/incorrect status for each ring — useful for verifying the solution.
 6. **Force Success** on the DM console will trigger the win state without solving the puzzle, if you want to verify the success animation/sound.
-
-Tips for solo testing:
-- Use Chrome's "Tab Groups" or split-screen windows to see multiple tabs at once.
-- The default channel timeout (10 s) gives you enough time to click Channel on all 4 tabs.
-- If a tab disconnects (e.g. you close it), its role is freed after 3 s — open a new tab to take it back.
 
 ## Configuration
 
