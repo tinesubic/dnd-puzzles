@@ -366,6 +366,7 @@ function resolveChannel() {
       hint: 'The channel was not unified. All must commit together.',
       nearSuccess: false,
     });
+    scatterRings();
     pushDmState();
     return;
   }
@@ -397,7 +398,11 @@ function resolveChannel() {
     errorCount: errors.length,
   });
 
-  // Punish failure: randomly rotate all rings to scatter the alignment
+  scatterRings();
+  pushDmState();
+}
+
+function scatterRings() {
   setTimeout(() => {
     for (let r = 0; r < 4; r++) {
       gameState.rings[r] = Math.floor(Math.random() * 8);
@@ -406,8 +411,6 @@ function resolveChannel() {
     broadcastAll({ type: 'ring_update', rings: gameState.rings });
     pushDmState();
   }, 1500);
-
-  pushDmState();
 }
 
 wss.on('connection', (ws, req) => {
