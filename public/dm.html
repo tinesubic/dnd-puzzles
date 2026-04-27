@@ -64,6 +64,17 @@
       text-align: center;
     }
 
+    #qr-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 12px auto;
+    }
+
+    #qr-container img {
+      display: block;
+    }
+
     #player-url {
       font-family: monospace;
       font-size: 1.4rem;
@@ -207,8 +218,9 @@
     <!-- Player URL -->
     <div class="card" id="url-section">
       <h2>Player Connection</h2>
+      <div id="qr-container"></div>
       <div id="player-url" onclick="navigator.clipboard.writeText(this.textContent)">Loading...</div>
-      <div class="url-hint">Click to copy. Share this URL with players on the same WiFi.</div>
+      <div class="url-hint">Scan the QR code or click the URL to copy. Players must be on the same WiFi.</div>
     </div>
 
     <!-- Players -->
@@ -229,12 +241,6 @@
       <div id="attempt-count">Attempts: 0</div>
     </div>
 
-    <!-- Rules Status -->
-    <div class="card">
-      <h2>Rules</h2>
-      <div id="rules-list"></div>
-    </div>
-
     <!-- Controls -->
     <div class="card">
       <h2>Controls</h2>
@@ -252,9 +258,30 @@
     </div>
   </div>
 
+  <script src="/js/qrcode.min.js"></script>
   <script>
     let ws;
     let dmState = null;
+
+    function renderQR(text) {
+      try {
+        const qr = qrcode(0, 'M');
+        qr.addData(text);
+        qr.make();
+        const container = document.getElementById('qr-container');
+        if (container) {
+          container.innerHTML = qr.createImgTag(5, 8);
+          const img = container.querySelector('img');
+          if (img) {
+            img.style.background = '#fff';
+            img.style.padding = '8px';
+            img.style.borderRadius = '6px';
+          }
+        }
+      } catch (e) {
+        console.error('QR code error:', e);
+      }
+    }
 
     const SCHOOLS = ['Abjuration','Evocation','Illusion','Necromancy','Transmutation','Conjuration','Divination','Enchantment'];
     const SOLUTION = [5,6,4,1];
@@ -280,6 +307,7 @@
       ws.onopen = () => {
         const playerUrl = `${location.protocol}//${location.host}/play`;
         document.getElementById('player-url').textContent = playerUrl;
+        renderQR(playerUrl);
       };
 
       ws.onmessage = (e) => {
@@ -293,7 +321,7 @@
             appendLog(msg.entry);
             break;
           case 'ring_update':
-            if (dmState) { dmState.rings = msg.rings; renderDM(); }
+            // Wait for full dm_state which has computed activeSchools
             break;
           case 'player_update':
             if (dmState) { dmState.players = msg.players; renderDM(); }
@@ -313,9 +341,10 @@
     function renderDM() {
       if (!dmState) return;
 
+      const activeSchools = dmState.activeSchools || [];
+      const solutionSchools = dmState.solutionSchools || [];
+      const solution = dmState.solution || [];
       const rings = dmState.rings || [0,0,0,0];
-      const activeSchools = rings.map(o => SCHOOLS[o % 8]);
-      const solutionSchools = SOLUTION.map(o => SCHOOLS[o % 8]);
 
       // Players
       const playerList = document.getElementById('player-list');
@@ -331,9 +360,9 @@
 
       // Solution status
       document.getElementById('solution-list').innerHTML = rings.map((offset, i) => {
-        const current = SCHOOLS[offset % 8];
-        const target = solutionSchools[i];
-        const correct = offset === SOLUTION[i];
+        const current = activeSchools[i] || '?';
+        const target = solutionSchools[i] || '?';
+        const correct = current === target;
         return `<div class="solution-row">
           <span>Ring ${i + 1}: <strong>${current}</strong></span>
           <span class="${correct ? 'sol-correct' : 'sol-wrong'}">${correct ? 'Correct' : `Need: ${target}`}</span>
@@ -342,16 +371,6 @@
 
       document.getElementById('attempt-count').textContent =
         `Attempts: ${dmState.attemptCount || 0} | Phase: ${dmState.phase || '?'}`;
-
-      // Rules — recalculate from rings
-      const errors = dmState.errors || [];
-      document.getElementById('rules-list').innerHTML = ALL_RULES.map(rule => {
-        const pass = !errors.includes(rule);
-        return `<div class="rule-row">
-          <span>${RULE_NAMES[rule]}</span>
-          <span class="${pass ? 'rule-pass' : 'rule-fail'}">${pass ? 'PASS' : 'FAIL'}</span>
-        </div>`;
-      }).join('');
     }
 
     function appendLog(entry) {

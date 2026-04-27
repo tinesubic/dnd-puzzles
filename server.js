@@ -190,8 +190,8 @@ const server = http.createServer((req, res) => {
   let url = req.url.split('?')[0];
 
   // Route / -> dm.html, /play -> player.html
-  if (url === '/') url = '/dm.html';
-  else if (url === '/play') url = '/player.html';
+  if (url === '/console') url = '/dm.html';
+  else if (url === '/play' || url === '/') url = '/player.html';
 
   const filePath = path.join(__dirname, 'public', url);
   const ext = path.extname(filePath);
@@ -587,6 +587,6 @@ function getLocalIP() {
 server.listen(PORT, '0.0.0.0', () => {
   const ip = getLocalIP();
   console.log(`\n  Weave Imbalance Lock\n`);
-  console.log(`  DM Console:  http://localhost:${PORT}`);
+  console.log(`  DM Console:  http://${ip}:${PORT}/console`);
   console.log(`  Player URL:  http://${ip}:${PORT}/play\n`);
 });

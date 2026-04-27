@@ -13,9 +13,11 @@ npm install
 node server.js
 ```
 
-The server prints two URLs:
-- **DM Console:** `http://localhost:3000` (open on the host laptop)
-- **Player URL:** `http://<local-ip>:3000/play` (share with players on the same WiFi)
+The server prints two URLs (using your machine's LAN IP):
+- **DM Console:** `http://<local-ip>:3000/console` (open on the host laptop)
+- **Player URL:** `http://<local-ip>:3000/play` or just `http://<local-ip>:3000` (share with players on the same WiFi)
+
+The DM console shows a QR code for the player URL — players can scan it with their phones to join.
 
 ## The Puzzle
 
@@ -53,6 +55,9 @@ The Seer's role is **strategic coordination**: cross-referencing what the Arcani
 
 The Warden controls the **inner ring**. Their power is also their curse: every time they rotate their ring by one position, **1, 2, or 3 other rings are randomly shifted by 1–3 positions** in random directions.
 
+The Warden is also the keeper of a cryptic riddle that hints at the solution:
+> *"The Weave broke when truth saw madness, sight became change, and the final hand chose protection over power."*
+
 This forces the Warden to act last and be careful — every adjustment risks unraveling the others' work.
 
 ### Interaction
@@ -60,7 +65,7 @@ This forces the Warden to act last and be careful — every adjustment risks unr
 - **Rotate** by dragging on the ring area (or using mouse drag on desktop). Each 45° rotation advances one position.
 - **Other players' rings** are hidden — you only see a faint purple selection marker at their top position. The actual glyphs are revealed briefly only while channeling.
 - **Press Channel** when you believe the lock is aligned. All four players must press within ~2 seconds.
-- **Failure** scatters the rings randomly, accompanied by a glass-cracking sound, screen shake, and a partial hint about which rule was broken.
+- **Failure** scatters all rings to random positions, accompanied by a glass-cracking sound, screen shake, and a partial hint about which rule was broken.
 - **Success** locks the rings in golden light. The Weave is restored.
 
 ### The Hidden Laws (Validation Rules)
@@ -69,15 +74,18 @@ The four selected schools (one per ring, outer → inner) must satisfy:
 
 | Rule | Constraint |
 |------|------------|
-| **Balance** | Exactly 1 stabilizer (Abjuration / Transmutation), at most 1 destructive (Evocation / Necromancy) |
-| **Flow Chain** | Divination → Enchantment → Transmutation → Evocation must appear in this relative order across the rings |
-| **Forbidden Adjacency** | Necromancy and Evocation must not be on adjacent rings |
-| **Anchor** | The outer ring must be Abjuration or Conjuration |
-| **Opposing Rings** | Rings 1↔3 and 2↔4 must not share the same category (stabilizer / destructive / mental / utility) |
+| **Anchor** | The outer ring must be **Divination** (truth) |
+| **Flow Chain** | Divination → Illusion → Transmutation → Abjuration must appear in this relative order across the rings |
 
-The hardcoded solution: **Conjuration · Divination · Transmutation · Evocation** (outer → inner).
+The hardcoded solution: **Divination · Illusion · Transmutation · Abjuration** (outer → inner).
 
-The categories of each school:
+This decodes the Warden's riddle:
+- *"truth"* = Divination (R1)
+- *"madness"* = Illusion (R2)
+- *"change"* = Transmutation (R3)
+- *"protection over power"* = Abjuration over Evocation (R4)
+
+The categories of each school (kept for reference / lore):
 - **Stabilizer:** Abjuration, Transmutation
 - **Destructive:** Evocation, Necromancy
 - **Mental:** Enchantment, Illusion
@@ -87,22 +95,20 @@ The categories of each school:
 
 When validation fails, the server reveals 1–2 partial hints (never all rule violations at once). After 5+ failed attempts, an extra hint is included. Example hints:
 
-- *"The weave lacks stability… or is crushed by too much of it."*
-- *"Too much destructive energy tears at the fabric."*
-- *"Death and destruction strain against each other. They must not touch."*
-- *"The outer ring cannot hold. It needs a stronger foundation."*
+- *"The flow of magic is disrupted. The current does not run true."*
+- *"The outer ring must hold truth — only sight can begin the weave."*
 
 If only one rule is broken, all rings glow gold — the players are close.
 
 ## DM Console
 
-The laptop browser shows:
-- Player connection status (which roles are filled)
-- Live ring state with the truth labels and correct/incorrect indicators
-- Per-rule pass/fail status
-- Manual hint sender
-- Reset / Force Success buttons (safety net if players are stuck)
-- Activity log
+At `http://<local-ip>:3000/console`. The laptop browser shows:
+- **QR code + URL** for players to join
+- **Player connection status** (which roles are filled)
+- **Live ring state** with truth labels and correct/incorrect indicators
+- **Manual hint sender** — typed hints appear as a purple pill above the players' Channel button
+- **Reset / Force Success** buttons (safety net if players are stuck)
+- **Activity log** of all rotations and channel attempts
 
 ## Tech Stack
 
@@ -115,13 +121,14 @@ The laptop browser shows:
 ```
 server.js                Game state, validation, WebSocket sync
 public/
-  player.html            Player view
-  dm.html                DM console
+  player.html            Player view (served at / and /play)
+  dm.html                DM console (served at /console)
   css/styles.css         Rings, animations, delirium theme
   js/
     rings.js             Ring rendering and touch rotation
     roles.js             Role-specific view logic
     client.js            WebSocket client, audio, UI
+    qrcode.min.js        QR code generator for DM console
   img/
     schools.svg          Magic school runes (sprite sheet)
     crystal.svg          Glitch effect for Distorted Mind

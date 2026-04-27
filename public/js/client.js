@@ -94,7 +94,7 @@ const Client = (() => {
         break;
 
       case 'dm_hint':
-        showStatus(msg.hint, true);
+        showDmHint(msg.hint);
         break;
 
       case 'phase_update':
@@ -290,6 +290,24 @@ const Client = (() => {
       rumble.connect(rumbleFilter).connect(rumbleGain).connect(dest);
       rumble.start(now);
     } catch (e) {}
+  }
+
+  function showDmHint(text) {
+    let banner = document.getElementById('dm-hint-banner');
+    if (!banner) {
+      banner = document.createElement('div');
+      banner.id = 'dm-hint-banner';
+      banner.className = 'dm-hint-banner';
+      // Insert above the channel button
+      const channelBtn = document.getElementById('channel-btn');
+      if (channelBtn && channelBtn.parentNode) {
+        channelBtn.parentNode.insertBefore(banner, channelBtn);
+      }
+    }
+    banner.textContent = text;
+    banner.classList.add('visible');
+    clearTimeout(banner._timer);
+    banner._timer = setTimeout(() => banner.classList.remove('visible'), 8000);
   }
 
   function showStatus(text, isHint) {
