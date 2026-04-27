@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Weave Imbalance Lock</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div id="app">
+
+    <!-- Waiting Screen -->
+    <div id="waiting-screen">
+      <h1>Weave Imbalance Lock</h1>
+      <p>The fractured Weave awaits<span class="waiting-dots"></span></p>
+      <p style="margin-top: 12px; font-size: 0.8rem;">Connecting to the arcane lattice</p>
+      <div id="player-indicators" style="margin-top: 20px;">
+        <div class="player-row"><div class="player-dot"></div><span class="player-name">Arcanist</span></div>
+        <div class="player-row"><div class="player-dot"></div><span class="player-name">Distorted Mind</span></div>
+        <div class="player-row"><div class="player-dot"></div><span class="player-name">Seer</span></div>
+        <div class="player-row"><div class="player-dot"></div><span class="player-name">Warden</span></div>
+      </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="game-screen" style="display: none; flex-direction: column; height: 100%;">
+
+      <!-- Role Banner -->
+      <div id="role-banner">
+        <h1 id="role-name"></h1>
+        <div class="role-subtitle" id="role-ring"></div>
+      </div>
+
+      <!-- Ring Visualization -->
+      <div id="ring-container">
+        <div id="ring-viewport"></div>
+      </div>
+
+      <!-- Controls -->
+      <div id="controls">
+        <div id="current-school">---</div>
+        <button id="channel-btn" onclick="Client.channel()">Channel</button>
+      </div>
+
+      <!-- Role-Specific Info -->
+      <div id="role-info"></div>
+
+      <!-- Status Bar -->
+      <div id="status-bar">Connecting...</div>
+
+      <!-- Player Dots (in game) -->
+      <div id="game-player-indicators" style="padding-bottom: 8px;">
+        <div class="player-row"><div class="player-dot"></div><span class="player-name">Arcanist</span></div>
+        <div class="player-row"><div class="player-dot"></div><span class="player-name">Distorted Mind</span></div>
+        <div class="player-row"><div class="player-dot"></div><span class="player-name">Seer</span></div>
+        <div class="player-row"><div class="player-dot"></div><span class="player-name">Warden</span></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/rings.js"></script>
+  <script src="/js/roles.js"></script>
+  <script src="/js/client.js"></script>
+  <script>Client.connect();</script>
+</body>
+</html>

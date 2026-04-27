@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DM Console — Weave Imbalance Lock</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0612;
+      --bg-card: #150d24;
+      --purple: #6b3fa0;
+      --purple-glow: #9b5de5;
+      --gold: #d4a843;
+      --green: #4ade80;
+      --red: #e05555;
+      --text: #d4cce8;
+      --text-dim: #7a6f8e;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      padding: 16px;
+      min-height: 100vh;
+    }
+
+    h1 {
+      text-align: center;
+      color: var(--purple-glow);
+      text-shadow: 0 0 20px rgba(155,93,229,0.4);
+      font-size: 1.5rem;
+      margin-bottom: 16px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid rgba(107,63,160,0.3);
+      border-radius: 10px;
+      padding: 14px;
+    }
+
+    .card h2 {
+      font-size: 0.85rem;
+      color: var(--purple-glow);
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    /* URL Section */
+    #url-section {
+      grid-column: 1 / -1;
+      text-align: center;
+    }
+
+    #player-url {
+      font-family: monospace;
+      font-size: 1.4rem;
+      color: var(--gold);
+      margin-top: 6px;
+      cursor: pointer;
+      padding: 10px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 8px;
+      border: 1px solid rgba(212,168,67,0.3);
+      display: inline-block;
+    }
+
+    #player-url:hover {
+      background: rgba(212,168,67,0.1);
+    }
+
+    .url-hint {
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      margin-top: 6px;
+    }
+
+    /* Players */
+    .player-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(107,63,160,0.15);
+    }
+
+    .player-row:last-child { border-bottom: none; }
+
+    .status-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--red);
+      flex-shrink: 0;
+    }
+
+    .status-dot.connected { background: var(--green); }
+
+    .player-role { font-weight: 600; font-size: 0.85rem; flex: 1; }
+    .player-ring { font-size: 0.75rem; color: var(--text-dim); }
+
+    /* Solution Status */
+    .solution-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px 0;
+      border-bottom: 1px solid rgba(107,63,160,0.15);
+      font-size: 0.85rem;
+    }
+
+    .solution-row:last-child { border-bottom: none; }
+
+    .sol-correct { color: var(--green); }
+    .sol-wrong { color: var(--red); }
+
+    /* Rules */
+    .rule-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+      font-size: 0.8rem;
+    }
+
+    .rule-pass { color: var(--green); }
+    .rule-fail { color: var(--red); }
+
+    /* Controls */
+    .dm-btn {
+      padding: 8px 14px;
+      border: 1px solid var(--purple);
+      border-radius: 6px;
+      background: rgba(107,63,160,0.2);
+      color: var(--text);
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      margin: 3px;
+    }
+
+    .dm-btn:hover { background: rgba(107,63,160,0.4); }
+
+    .dm-btn.danger {
+      border-color: var(--red);
+      background: rgba(224,85,85,0.15);
+    }
+
+    .dm-btn.danger:hover { background: rgba(224,85,85,0.3); }
+
+    .dm-btn.success-btn {
+      border-color: var(--gold);
+      background: rgba(212,168,67,0.15);
+    }
+
+    #hint-input {
+      width: 100%;
+      padding: 6px 10px;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(107,63,160,0.3);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 0.8rem;
+      margin-top: 6px;
+    }
+
+    /* Activity Log */
+    #log-card { grid-column: 1 / -1; }
+
+    #log-list {
+      max-height: 200px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      scrollbar-width: thin;
+      scrollbar-color: var(--purple) transparent;
+    }
+
+    .log-entry {
+      padding: 2px 0;
+      border-bottom: 1px solid rgba(107,63,160,0.08);
+    }
+
+    #attempt-count {
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Weave Imbalance Lock &mdash; DM Console</h1>
+
+  <div class="grid">
+    <!-- Player URL -->
+    <div class="card" id="url-section">
+      <h2>Player Connection</h2>
+      <div id="player-url" onclick="navigator.clipboard.writeText(this.textContent)">Loading...</div>
+      <div class="url-hint">Click to copy. Share this URL with players on the same WiFi.</div>
+    </div>
+
+    <!-- Players -->
+    <div class="card">
+      <h2>Players</h2>
+      <div id="player-list">
+        <div class="player-row"><span class="status-dot"></span><span class="player-role">Waiting...</span></div>
+        <div class="player-row"><span class="status-dot"></span><span class="player-role">Waiting...</span></div>
+        <div class="player-row"><span class="status-dot"></span><span class="player-role">Waiting...</span></div>
+        <div class="player-row"><span class="status-dot"></span><span class="player-role">Waiting...</span></div>
+      </div>
+    </div>
+
+    <!-- Solution Status -->
+    <div class="card">
+      <h2>Ring Status</h2>
+      <div id="solution-list"></div>
+      <div id="attempt-count">Attempts: 0</div>
+    </div>
+
+    <!-- Rules Status -->
+    <div class="card">
+      <h2>Rules</h2>
+      <div id="rules-list"></div>
+    </div>
+
+    <!-- Controls -->
+    <div class="card">
+      <h2>Controls</h2>
+      <button class="dm-btn" onclick="dmReset()">Reset Puzzle</button>
+      <button class="dm-btn success-btn" onclick="dmForceSuccess()">Force Success</button>
+      <br>
+      <input type="text" id="hint-input" placeholder="Type a hint to send..." onkeydown="if(event.key==='Enter')dmSendHint()">
+      <button class="dm-btn" onclick="dmSendHint()" style="margin-top: 4px;">Send Hint</button>
+    </div>
+
+    <!-- Activity Log -->
+    <div class="card" id="log-card">
+      <h2>Activity Log</h2>
+      <div id="log-list"></div>
+    </div>
+  </div>
+
+  <script>
+    let ws;
+    let dmState = null;
+
+    const SCHOOLS = ['Abjuration','Evocation','Illusion','Necromancy','Transmutation','Conjuration','Divination','Enchantment'];
+    const SOLUTION = [5,6,4,1];
+
+    const RULE_NAMES = {
+      balance_stabilizer: 'Balance (Stabilizer)',
+      balance_destructive: 'Balance (Destructive)',
+      flow_broken: 'Flow Chain',
+      forbidden_adjacency: 'Forbidden Adjacency',
+      anchor_invalid: 'Outer Anchor',
+      opposing_mirror_13: 'Opposing R1/R3',
+      opposing_mirror_24: 'Opposing R2/R4',
+    };
+
+    const ALL_RULES = Object.keys(RULE_NAMES);
+    const ROLE_NAMES = { arcanist: 'The Arcanist', distorted: 'The Distorted Mind', seer: 'The Seer', warden: 'The Warden' };
+    const ROLES = ['arcanist', 'distorted', 'seer', 'warden'];
+
+    function connectDM() {
+      const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+      ws = new WebSocket(`${proto}//${location.host}?dm=1`);
+
+      ws.onopen = () => {
+        const playerUrl = `${location.protocol}//${location.host}/play`;
+        document.getElementById('player-url').textContent = playerUrl;
+      };
+
+      ws.onmessage = (e) => {
+        const msg = JSON.parse(e.data);
+        switch (msg.type) {
+          case 'dm_state':
+            dmState = msg;
+            renderDM();
+            break;
+          case 'log':
+            appendLog(msg.entry);
+            break;
+          case 'ring_update':
+            if (dmState) { dmState.rings = msg.rings; renderDM(); }
+            break;
+          case 'player_update':
+            if (dmState) { dmState.players = msg.players; renderDM(); }
+            break;
+          case 'channel_result':
+            if (dmState) { dmState.phase = msg.success ? 'success' : 'playing'; renderDM(); }
+            break;
+          case 'phase_update':
+            if (dmState) { dmState.phase = msg.phase; renderDM(); }
+            break;
+        }
+      };
+
+      ws.onclose = () => setTimeout(connectDM, 2000);
+    }
+
+    function renderDM() {
+      if (!dmState) return;
+
+      const rings = dmState.rings || [0,0,0,0];
+      const activeSchools = rings.map(o => SCHOOLS[o % 8]);
+      const solutionSchools = SOLUTION.map(o => SCHOOLS[o % 8]);
+
+      // Players
+      const playerList = document.getElementById('player-list');
+      playerList.innerHTML = ROLES.map((role, i) => {
+        const p = (dmState.players || []).find(pl => pl.role === role);
+        const connected = p && p.connected;
+        return `<div class="player-row">
+          <span class="status-dot ${connected ? 'connected' : ''}"></span>
+          <span class="player-role">${ROLE_NAMES[role]}</span>
+          <span class="player-ring">Ring ${i + 1}</span>
+        </div>`;
+      }).join('');
+
+      // Solution status
+      document.getElementById('solution-list').innerHTML = rings.map((offset, i) => {
+        const current = SCHOOLS[offset % 8];
+        const target = solutionSchools[i];
+        const correct = offset === SOLUTION[i];
+        return `<div class="solution-row">
+          <span>Ring ${i + 1}: <strong>${current}</strong></span>
+          <span class="${correct ? 'sol-correct' : 'sol-wrong'}">${correct ? 'Correct' : `Need: ${target}`}</span>
+        </div>`;
+      }).join('');
+
+      document.getElementById('attempt-count').textContent =
+        `Attempts: ${dmState.attemptCount || 0} | Phase: ${dmState.phase || '?'}`;
+
+      // Rules — recalculate from rings
+      const errors = dmState.errors || [];
+      document.getElementById('rules-list').innerHTML = ALL_RULES.map(rule => {
+        const pass = !errors.includes(rule);
+        return `<div class="rule-row">
+          <span>${RULE_NAMES[rule]}</span>
+          <span class="${pass ? 'rule-pass' : 'rule-fail'}">${pass ? 'PASS' : 'FAIL'}</span>
+        </div>`;
+      }).join('');
+    }
+
+    function appendLog(entry) {
+      const list = document.getElementById('log-list');
+      const div = document.createElement('div');
+      div.className = 'log-entry';
+      div.textContent = entry;
+      list.appendChild(div);
+      list.scrollTop = list.scrollHeight;
+    }
+
+    function dmReset() {
+      ws.send(JSON.stringify({ type: 'dm_reset' }));
+    }
+
+    function dmForceSuccess() {
+      if (confirm('Force the puzzle to succeed?')) {
+        ws.send(JSON.stringify({ type: 'dm_force_success' }));
+      }
+    }
+
+    function dmSendHint() {
+      const input = document.getElementById('hint-input');
+      const hint = input.value.trim();
+      if (hint) {
+        ws.send(JSON.stringify({ type: 'dm_hint', hint }));
+        input.value = '';
+      }
+    }
+
+    connectDM();
+  </script>
+</body>
+</html>

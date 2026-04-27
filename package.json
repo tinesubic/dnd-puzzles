@@ -1,0 +1,12 @@
+{
+  "name": "weave-imbalance-lock",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "test": "node server.js --test"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}
