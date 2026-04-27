@@ -17,10 +17,6 @@ npm install
 node server.js
 ```
 
-The server prints two URLs (using your machine's LAN IP):
-- **DM Console:** `http://<local-ip>:3000/console` (open on the host laptop)
-- **Player URL:** `http://<local-ip>:3000/play` or just `http://<local-ip>:3000` (share with players on the same WiFi)
-
 The DM console shows a QR code for the player URL — players can scan it with their phones to join.
 
 ### Running with Docker
@@ -29,24 +25,6 @@ A `Dockerfile` and `run.sh` helper are included. Requires Docker.
 
 ```bash
 ./run.sh
-```
-
-The script builds the image, replaces any existing container, mounts `config.json` read-only so you can tweak settings without rebuilding, detects your LAN IP and passes it to the server as `HOST_IP` so the QR code and printed URLs are reachable from players' phones.
-
-If auto-detection picks the wrong interface (e.g. you're on a VPN), override it:
-
-```bash
-HOST_IP=192.168.1.42 ./run.sh
-```
-
-Or run directly with Docker — pass your host's LAN IP via `HOST_IP`, otherwise the server will print the container's internal IP:
-
-```bash
-docker build -t weave-imbalance-lock .
-docker run --rm -p 3000:3000 \
-  -e HOST_IP="$(ipconfig getifaddr en0)" \
-  -v "$PWD/config.json:/app/config.json:ro" \
-  weave-imbalance-lock
 ```
 
 ## The Puzzle
