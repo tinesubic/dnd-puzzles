@@ -7,13 +7,8 @@
   "solution": ["Divination", "Illusion", "Transmutation", "Abjuration"],
   "wardenRiddle": "The Weave broke when truth saw madness, sight became change, and the final hand chose protection over power.",
   "failureHints": {
-    "balance_stabilizer": "The weave lacks stability — it needs an anchor.",
-    "balance_destructive": "Destructive forces have no place here. Choose protection over power.",
     "flow_broken": "The flow of magic is disrupted. The current does not run true.",
-    "forbidden_adjacency": "Death and destruction strain against each other. They must not touch.",
     "anchor_invalid": "The outer ring must hold truth — only sight can begin the weave.",
-    "opposing_mirror_13": "The first and third rings echo each other. Symmetry breeds instability.",
-    "opposing_mirror_24": "The second and fourth rings mirror too closely.",
     "channel_not_unified": "The channel was not unified. All must commit together."
   }
 }

@@ -144,7 +144,7 @@ Server behavior is controlled by `config.json` in the project root. Edit and res
 | `wardenSpinChance` | `1.0` | Probability (0.0–1.0) that the Warden's curse triggers on each rotation. At `1.0` every Warden rotation spins 1–3 other rings. Lower it (e.g. `0.5`) to make the Warden's effect less constant. |
 | `solution` | `["Divination", "Illusion", "Transmutation", "Abjuration"]` | Target school for each ring (outer→inner). Change this to use a different solution. School names must match the canonical 8 schools (Abjuration, Conjuration, Divination, Enchantment, Evocation, Illusion, Necromancy, Transmutation). |
 | `wardenRiddle` | *(see config.json)* | The cryptic riddle shown to the Warden as a hint toward the solution. Customize this to match your puzzle's flavor. |
-| `failureHints` | *(see config.json)* | Map of rule-violation keys to hint text shown after a failed attempt. Keys: `balance_stabilizer`, `balance_destructive`, `flow_broken`, `forbidden_adjacency`, `anchor_invalid`, `opposing_mirror_13`, `opposing_mirror_24`, `channel_not_unified`. Override any subset; missing keys fall back to defaults. |
+| `failureHints` | *(see config.json)* | Map of rule-violation keys to hint text shown after a failed attempt. Keys: `flow_broken` (chain order broken), `anchor_invalid` (outer ring is wrong), `channel_not_unified` (not all players pressed Channel). Override any subset; missing keys fall back to defaults. |
 
 If `config.json` is missing or invalid, the server falls back to the defaults above and logs a notice on startup.
 
