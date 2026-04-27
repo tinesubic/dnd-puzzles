@@ -5,9 +5,32 @@ const os = require('os');
 const { WebSocketServer } = require('ws');
 const crypto = require('crypto');
 
-// ── Constants ──────────────────────────────────────────────────────────────────
+// ── Config ─────────────────────────────────────────────────────────────────────
 
-const PORT = 3000;
+const DEFAULT_CONFIG = {
+  port: 3000,
+  channelTimeoutMs: 10000,
+  scatterDelayMs: 1500,
+  disconnectGraceMs: 3000,
+  wardenSpinChance: 1.0,
+};
+
+let config = { ...DEFAULT_CONFIG };
+try {
+  const userConfig = JSON.parse(fs.readFileSync(path.join(__dirname, 'config.json'), 'utf8'));
+  config = { ...DEFAULT_CONFIG, ...userConfig };
+  console.log('Loaded config:', config);
+} catch (e) {
+  console.log('Using default config (config.json not found or invalid)');
+}
+
+const PORT = config.port;
+const CHANNEL_TIMEOUT_MS = config.channelTimeoutMs;
+const SCATTER_DELAY_MS = config.scatterDelayMs;
+const DISCONNECT_GRACE_MS = config.disconnectGraceMs;
+const WARDEN_SPIN_CHANCE = config.wardenSpinChance;
+
+// ── Constants ──────────────────────────────────────────────────────────────────
 
 const SCHOOLS = [
   'Abjuration', 'Evocation', 'Illusion', 'Necromancy',
@@ -317,7 +340,7 @@ function handleChannel(token) {
   if (!channelWindow.active) {
     channelWindow.active = true;
     gameState.phase = 'channeling';
-    channelWindow.timer = setTimeout(() => resolveChannel(), 2000);
+    channelWindow.timer = setTimeout(() => resolveChannel(), CHANNEL_TIMEOUT_MS);
   }
 
   // If all connected players have pressed, resolve immediately
@@ -390,7 +413,7 @@ function scatterRings() {
     addLog('The Weave convulses — the rings scatter');
     broadcastAll({ type: 'ring_update', rings: gameState.rings });
     pushDmState();
-  }, 1500);
+  }, SCATTER_DELAY_MS);
 }
 
 wss.on('connection', (ws, req) => {
@@ -476,7 +499,7 @@ wss.on('connection', (ws, req) => {
         addLog(`${ROLE_NAMES[p.role]} rotated Ring ${p.ringIndex + 1} to position ${gameState.rings[p.ringIndex]}`);
 
         // Warden's curse: rotating their ring also spins 1-3 other rings
-        if (p.role === 'warden') {
+        if (p.role === 'warden' && Math.random() < WARDEN_SPIN_CHANCE) {
           const otherRings = [0, 1, 2, 3].filter(r => r !== p.ringIndex);
           const numToSpin = 1 + Math.floor(Math.random() * 3); // 1, 2, or 3 rings
           const shuffled = otherRings.sort(() => Math.random() - 0.5);
@@ -508,7 +531,7 @@ wss.on('connection', (ws, req) => {
       player.ws = null;
       addLog(`${ROLE_NAMES[player.role]} disconnected`);
 
-      // Free the slot after 30s if they don't reconnect
+      // Free the slot after grace period if they don't reconnect
       player.disconnectTimer = setTimeout(() => {
         if (gameState.players[playerToken] && !gameState.players[playerToken].connected) {
           addLog(`${ROLE_NAMES[player.role]} slot freed`);
@@ -516,7 +539,7 @@ wss.on('connection', (ws, req) => {
           broadcastAll({ type: 'player_update', ...getStateForClient() });
           pushDmState();
         }
-      }, 3000);
+      }, DISCONNECT_GRACE_MS);
 
       broadcastAll({ type: 'player_update', ...getStateForClient() });
       pushDmState();
