@@ -38,7 +38,13 @@ const Roles = (() => {
     desc.textContent = ROLE_DESCRIPTIONS[role] || '';
     container.appendChild(desc);
 
-
+    if (role === 'warden') {
+      const hint = document.createElement('div');
+      hint.className = 'rule-card constraint-hint';
+      hint.style.borderColor = 'rgba(212, 168, 67, 0.4)';
+      hint.textContent = 'The Weave broke when truth saw madness, sight became change, and the final hand chose protection over power.';
+      container.appendChild(hint);
+    }
   }
 
   function applyTheme(role) {

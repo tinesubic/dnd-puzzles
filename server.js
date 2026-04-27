@@ -32,7 +32,7 @@ const ROLE_NAMES = {
 
 // Each ring has schools in a different random order.
 // The solution target schools: Ring1=Conjuration, Ring2=Divination, Ring3=Transmutation, Ring4=Evocation
-const SOLUTION_SCHOOLS = ['Conjuration', 'Divination', 'Transmutation', 'Evocation'];
+const SOLUTION_SCHOOLS = ['Divination', 'Illusion', 'Transmutation', 'Abjuration'];
 
 // Seeded shuffle for reproducibility (Fisher-Yates with a simple seed)
 function seededShuffle(arr, seed) {
@@ -98,18 +98,11 @@ function getActiveSchools(rings) {
 
 function validate(rings) {
   const schools = getActiveSchools(rings);
-  const categories = schools.map(s => CATEGORIES[s]);
   const errors = [];
 
-  // Rule A — Balance: exactly 1 stabilizer, at most 1 destructive
-  const stabCount = categories.filter(c => c === 'stabilizer').length;
-  const destCount = categories.filter(c => c === 'destructive').length;
-  if (stabCount !== 1) errors.push('balance_stabilizer');
-  if (destCount > 1) errors.push('balance_destructive');
-
-  // Rule B — Flow chain: Divination -> Enchantment -> Transmutation -> Evocation
+  // Rule B — Flow chain: Divination -> Illusion -> Transmutation -> Abjuration
   // Present chain members must appear in this relative order across rings
-  const chain = ['Divination', 'Enchantment', 'Transmutation', 'Evocation'];
+  const chain = ['Divination', 'Illusion', 'Transmutation', 'Abjuration'];
   const presentChain = schools
     .map((s, i) => ({ school: s, ring: i }))
     .filter(x => chain.includes(x.school));
@@ -122,33 +115,20 @@ function validate(rings) {
     }
   }
 
-  // Rule C — Forbidden adjacency: Necromancy cannot touch Evocation
-  for (let i = 0; i < 3; i++) {
-    const pair = [schools[i], schools[i + 1]].sort();
-    if (pair[0] === 'Evocation' && pair[1] === 'Necromancy') {
-      errors.push('forbidden_adjacency');
-      break;
-    }
-  }
-
-  // Rule D — Anchor: outer ring must be Abjuration or Conjuration
-  if (!['Abjuration', 'Conjuration'].includes(schools[0])) {
+  // Rule D — Anchor: outer ring must be Divination ("truth")
+  if (schools[0] !== 'Divination') {
     errors.push('anchor_invalid');
   }
-
-  // Rule E — Opposing rings must not share a category
-  if (categories[0] === categories[2]) errors.push('opposing_mirror_13');
-  if (categories[1] === categories[3]) errors.push('opposing_mirror_24');
 
   return errors;
 }
 
 const HINTS = {
-  balance_stabilizer: 'The weave lacks stability\u2026 or is crushed by too much of it.',
-  balance_destructive: 'Too much destructive energy tears at the fabric.',
+  balance_stabilizer: 'The weave lacks stability \u2014 it needs an anchor.',
+  balance_destructive: 'Destructive forces have no place here. Choose protection over power.',
   flow_broken: 'The flow of magic is disrupted. The current does not run true.',
   forbidden_adjacency: 'Death and destruction strain against each other. They must not touch.',
-  anchor_invalid: 'The outer ring cannot hold. It needs a stronger foundation.',
+  anchor_invalid: 'The outer ring must hold truth — only sight can begin the weave.',
   opposing_mirror_13: 'The first and third rings echo each other. Symmetry breeds instability.',
   opposing_mirror_24: 'The second and fourth rings mirror too closely.',
 };
