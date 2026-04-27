@@ -304,17 +304,20 @@
       const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
       ws = new WebSocket(`${proto}//${location.host}?dm=1`);
 
-      ws.onopen = () => {
-        const playerUrl = `${location.protocol}//${location.host}/play`;
-        document.getElementById('player-url').textContent = playerUrl;
-        renderQR(playerUrl);
-      };
-
       ws.onmessage = (e) => {
         const msg = JSON.parse(e.data);
         switch (msg.type) {
           case 'dm_state':
             dmState = msg;
+            // Use the server-reported LAN IP (not location.host which may be localhost)
+            if (msg.serverIP && msg.serverPort) {
+              const playerUrl = `${location.protocol}//${msg.serverIP}:${msg.serverPort}/play`;
+              const urlEl = document.getElementById('player-url');
+              if (urlEl.textContent !== playerUrl) {
+                urlEl.textContent = playerUrl;
+                renderQR(playerUrl);
+              }
+            }
             renderDM();
             break;
           case 'log':

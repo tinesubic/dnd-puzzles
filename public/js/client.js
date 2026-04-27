@@ -202,6 +202,7 @@ const Client = (() => {
     document.body.classList.remove('near-success', 'shake');
     document.body.classList.add('success');
     showStatus('The lock shatters. The Weave is restored.', true);
+    playVictory();
   }
 
   function handleFailure(msg) {
@@ -232,6 +233,50 @@ const Client = (() => {
   let audioCtx = null;
   const crackSound = new Audio('/audio/glass-crack.mp3');
   crackSound.preload = 'auto';
+
+  function playVictory() {
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+
+      const now = audioCtx.currentTime;
+      const dest = audioCtx.destination;
+
+      // Crystal chime: 3 ascending bell tones with quick attack, long decay
+      // Frequencies are slightly inharmonic for a glassy bell quality
+      const notes = [
+        { freq: 880.00, time: 0.00 },  // A5
+        { freq: 1318.51, time: 0.10 }, // E6
+        { freq: 1760.00, time: 0.20 }, // A6
+      ];
+
+      notes.forEach(({ freq, time }) => {
+        // Fundamental — pure sine, bell-like
+        const osc = audioCtx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        const gain = audioCtx.createGain();
+        gain.gain.setValueAtTime(0, now + time);
+        gain.gain.linearRampToValueAtTime(0.4, now + time + 0.005);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + time + 0.9);
+        osc.connect(gain).connect(dest);
+        osc.start(now + time);
+        osc.stop(now + time + 1);
+
+        // Inharmonic overtone for crystal shimmer
+        const over = audioCtx.createOscillator();
+        over.type = 'sine';
+        over.frequency.value = freq * 2.76; // inharmonic ratio (bell-like)
+        const overGain = audioCtx.createGain();
+        overGain.gain.setValueAtTime(0, now + time);
+        overGain.gain.linearRampToValueAtTime(0.08, now + time + 0.005);
+        overGain.gain.exponentialRampToValueAtTime(0.001, now + time + 0.5);
+        over.connect(overGain).connect(dest);
+        over.start(now + time);
+        over.stop(now + time + 0.55);
+      });
+    } catch (e) {}
+  }
 
   function playCrystalBreak() {
     // Play the real glass cracking sample

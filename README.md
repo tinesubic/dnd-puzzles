@@ -4,6 +4,10 @@ A real-time multiplayer DnD puzzle for 4 players, themed around the fractured We
 
 Designed as a one-shot puzzle prop — the DM hosts the server on a laptop, and players join via their phones over local WiFi.
 
+| DM Console (laptop) | Player View (phone) |
+|---|---|
+| ![DM Console](docs/dm-console.png) | ![Player View](docs/player-view.png) |
+
 ## Running
 
 Requires Node.js.
@@ -53,18 +57,18 @@ The Seer's role is **strategic coordination**: cross-referencing what the Arcani
 #### 🜃 The Warden — *Binding*
 > *"You bind the Weave, but it answers in kind — each turn of your ring sends ripples through the others, shifting their alignment."*
 
-The Warden controls the **inner ring**. Their power is also their curse: every time they rotate their ring by one position, **1, 2, or 3 other rings are randomly shifted by 1–3 positions** in random directions.
+The Warden controls the **inner ring**. Their power is also their curse: every time they rotate their ring by one position, **other rings are randomly shifted by 1–3 positions** in random directions.
 
 The Warden is also the keeper of a cryptic riddle that hints at the solution:
 > *"The Weave broke when truth saw madness, sight became change, and the final hand chose protection over power."*
 
-This forces the Warden to act last and be careful — every adjustment risks unraveling the others' work.
+This forces the Warden to be careful — every adjustment risks unraveling the others' work.
 
 ### Interaction
 
 - **Rotate** by dragging on the ring area (or using mouse drag on desktop). Each 45° rotation advances one position.
 - **Other players' rings** are hidden — you only see a faint purple selection marker at their top position. The actual glyphs are revealed briefly only while channeling.
-- **Press Channel** when you believe the lock is aligned. All four players must press within ~2 seconds.
+- **Press Channel** when you believe the lock is aligned. All four players must press within a few seconds.
 - **Failure** scatters all rings to random positions, accompanied by a glass-cracking sound, screen shake, and a partial hint about which rule was broken.
 - **Success** locks the rings in golden light. The Weave is restored.
 
@@ -109,6 +113,48 @@ At `http://<local-ip>:3000/console`. The laptop browser shows:
 - **Manual hint sender** — typed hints appear as a purple pill above the players' Channel button
 - **Reset / Force Success** buttons (safety net if players are stuck)
 - **Activity log** of all rotations and channel attempts
+
+## Solo Playtest
+
+You can test the entire puzzle alone on the host laptop — useful before running it with players.
+
+1. Start the server: `node server.js`
+2. Open **5 browser tabs** on the laptop:
+   - 1 tab: `http://localhost:3000/console` — DM console
+   - 4 tabs: `http://localhost:3000/play` — one for each role
+3. Each player tab will be auto-assigned to the next available role in order: Arcanist → Distorted Mind → Seer → Warden.
+4. Drag in each ring tab to rotate, then press **Channel** in all four within the timeout window (default 10 s).
+5. Use the DM console to monitor state in real time. The DM tab also shows the correct/incorrect status for each ring — useful for verifying the solution.
+6. **Force Success** on the DM console will trigger the win state without solving the puzzle, if you want to verify the success animation/sound.
+
+Tips for solo testing:
+- Use Chrome's "Tab Groups" or split-screen windows to see multiple tabs at once.
+- The default channel timeout (10 s) gives you enough time to click Channel on all 4 tabs.
+- If a tab disconnects (e.g. you close it), its role is freed after 3 s — open a new tab to take it back.
+
+## Configuration
+
+Server behavior is controlled by `config.json` in the project root. Edit and restart the server to apply changes.
+
+```json
+{
+  "port": 3000,
+  "channelTimeoutMs": 10000,
+  "scatterDelayMs": 1500,
+  "disconnectGraceMs": 3000,
+  "wardenSpinChance": 1.0
+}
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `port` | `3000` | HTTP/WebSocket port the server listens on |
+| `channelTimeoutMs` | `10000` | Window (ms) for all players to press Channel after the first press. If the timeout expires before everyone presses, the channel fails and rings scatter. |
+| `scatterDelayMs` | `1500` | Delay (ms) between a failed channel attempt and the random scatter of the rings. Gives players time to read the failure hint. |
+| `disconnectGraceMs` | `3000` | Time (ms) a disconnected player's role is held before being freed for someone else. Allows brief WiFi drops or page reloads. |
+| `wardenSpinChance` | `1.0` | Probability (0.0–1.0) that the Warden's curse triggers on each rotation. At `1.0` every Warden rotation spins 1–3 other rings. Lower it (e.g. `0.5`) to make the Warden's effect less constant. |
+
+If `config.json` is missing or invalid, the server falls back to the defaults above and logs a notice on startup.
 
 ## Tech Stack
 

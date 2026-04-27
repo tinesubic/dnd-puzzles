@@ -303,6 +303,8 @@ function getDmState() {
     channeling: Array.from(channelWindow.presses.keys()),
     schools: SCHOOLS,
     categories: CATEGORIES,
+    serverIP: getLocalIP(),
+    serverPort: PORT,
   };
 }
 
