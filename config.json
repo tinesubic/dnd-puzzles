@@ -1,11 +1,11 @@
 {
-  "port": 3000,
+  "port": 4444,
   "channelTimeoutMs": 10000,
   "scatterDelayMs": 1500,
   "disconnectGraceMs": 3000,
   "wardenSpinChance": 1.0,
   "solution": ["Divination", "Illusion", "Transmutation", "Abjuration"],
-  "wardenRiddle": "The Weave broke when truth saw madness, sight became change, and the final hand chose protection over power.",
+  "wardenRiddle": "The Weave broke when truth seeker gazed upon madness, conjuror of cheap tricks wrought true change and the Last Magister chose protection over domination.",
   "failureHints": {
     "flow_broken": "The flow of magic is disrupted. The current does not run true.",
     "anchor_invalid": "The outer ring must hold truth — only sight can begin the weave.",
