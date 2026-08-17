@@ -209,6 +209,37 @@
       color: var(--text-dim);
       margin-top: 4px;
     }
+
+    #backlash-card { grid-column: 1 / -1; }
+
+    #backlash-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.78rem;
+      line-height: 1.4;
+    }
+
+    #backlash-table th,
+    #backlash-table td {
+      padding: 7px 8px;
+      border-bottom: 1px solid rgba(107,63,160,0.18);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    #backlash-table th {
+      color: var(--purple-glow);
+      font-size: 0.7rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    #backlash-table td:first-child {
+      width: 42px;
+      color: var(--red);
+      font-weight: 700;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
@@ -255,6 +286,15 @@
     <div class="card" id="log-card">
       <h2>Activity Log</h2>
       <div id="log-list"></div>
+    </div>
+
+    <!-- Backlash reference table -->
+    <div class="card" id="backlash-card">
+      <h2>Arcane Backlash Table</h2>
+      <table id="backlash-table">
+        <thead><tr><th>#</th><th>Effect</th></tr></thead>
+        <tbody id="backlash-table-body"></tbody>
+      </table>
     </div>
   </div>
 
@@ -371,6 +411,17 @@
 
       document.getElementById('attempt-count').textContent =
         `Attempts: ${dmState.attemptCount || 0} | Phase: ${dmState.phase || '?'}`;
+
+      const backlashTableBody = document.getElementById('backlash-table-body');
+      backlashTableBody.replaceChildren(...(dmState.backlashEffects || []).map(backlash => {
+        const row = document.createElement('tr');
+        const number = document.createElement('td');
+        const effect = document.createElement('td');
+        number.textContent = backlash.number;
+        effect.textContent = backlash.effect;
+        row.append(number, effect);
+        return row;
+      }));
     }
 
     function appendLog(entry) {

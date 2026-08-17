@@ -100,7 +100,7 @@ You can test the entire puzzle alone on the host laptop — useful before runnin
    - 1 tab: `http://localhost:3000/console` — DM console
    - 4 tabs: `http://localhost:3000/play` — one for each role
 3. Each player tab will be auto-assigned to the next available role in order: Arcanist → Distorted Mind → Seer → Warden.
-4. Drag in each ring tab to rotate, then press **Channel** in all four within the timeout window (default 10 s).
+4. Drag in each ring tab to rotate, then press **Channel** in all four within the timeout window (default 5 s).
 5. Use the DM console to monitor state in real time. The DM tab also shows the correct/incorrect status for each ring — useful for verifying the solution.
 6. **Force Success** on the DM console will trigger the win state without solving the puzzle, if you want to verify the success animation/sound.
 
@@ -111,7 +111,7 @@ Server behavior is controlled by `config.json` in the project root. Edit and res
 ```json
 {
   "port": 3000,
-  "channelTimeoutMs": 10000,
+  "channelTimeoutMs": 5000,
   "scatterDelayMs": 1500,
   "disconnectGraceMs": 3000,
   "wardenSpinChance": 1.0,
@@ -124,7 +124,7 @@ Server behavior is controlled by `config.json` in the project root. Edit and res
 | Option | Default | Description |
 |---|---|---|
 | `port` | `3000` | HTTP/WebSocket port the server listens on |
-| `channelTimeoutMs` | `10000` | Window (ms) for all players to press Channel after the first press. If the timeout expires before everyone presses, the channel fails and rings scatter. |
+| `channelTimeoutMs` | `5000` | Window (ms) for all players to press Channel after the first press. If the timeout expires before everyone presses, the channel fails and rings scatter. |
 | `scatterDelayMs` | `1500` | Delay (ms) between a failed channel attempt and the random scatter of the rings. Gives players time to read the failure hint. |
 | `disconnectGraceMs` | `3000` | Time (ms) a disconnected player's role is held before being freed for someone else. Allows brief WiFi drops or page reloads. |
 | `wardenSpinChance` | `1.0` | Probability (0.0–1.0) that the Warden's curse triggers on each rotation. At `1.0` every Warden rotation spins 1–3 other rings. Lower it (e.g. `0.5`) to make the Warden's effect less constant. |

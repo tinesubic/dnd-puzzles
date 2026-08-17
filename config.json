@@ -1,6 +1,6 @@
 {
   "port": 4444,
-  "channelTimeoutMs": 10000,
+  "channelTimeoutMs": 5000,
   "scatterDelayMs": 1500,
   "disconnectGraceMs": 3000,
   "wardenSpinChance": 1.0,

@@ -63,6 +63,7 @@ const Client = (() => {
         };
         currentRings = msg.rings;
         updatePlayerDots(msg.players);
+        updateBacklashFromPlayers(msg.players);
         // Re-render role info if it depends on the riddle (Warden)
         if (myRole === 'warden' && document.getElementById('role-info')) {
           Roles.renderInfo(myRole, document.getElementById('role-info'), gameData.wardenRiddle);
@@ -89,6 +90,7 @@ const Client = (() => {
         if (msg.success) {
           handleSuccess();
         } else {
+          addBacklashFromAssignments(msg.backlashes);
           // Hide other rings again after a delay so players can see the result briefly
           setTimeout(() => {
             Rings.setShowOtherRings(false);
@@ -184,6 +186,37 @@ const Client = (() => {
       const p = players[idx];
       dot.classList.toggle('connected', p && p.connected);
     });
+  }
+
+  let activeBacklashes = [];
+
+  function renderBacklashes(backlashes) {
+    const panel = document.getElementById('backlash-panel');
+    if (!panel) return;
+
+    activeBacklashes = backlashes || [];
+    panel.hidden = activeBacklashes.length === 0;
+    if (activeBacklashes.length === 0) return;
+
+    const effects = document.getElementById('backlash-effects');
+    effects.replaceChildren(...activeBacklashes.map(backlash => {
+      const item = document.createElement('div');
+      item.className = 'backlash-effect';
+      item.textContent = `#${backlash.number} — ${backlash.effect}`;
+      return item;
+    }));
+  }
+
+  function updateBacklashFromPlayers(players) {
+    if (!myRole || !players) return;
+    const me = players.find(player => player.role === myRole);
+    renderBacklashes(me?.backlashes || []);
+  }
+
+  function addBacklashFromAssignments(backlashes) {
+    if (!myRole || !backlashes) return;
+    const mine = backlashes.find(backlash => backlash.role === myRole);
+    if (mine) renderBacklashes([...activeBacklashes, mine]);
   }
 
   // ── Actions ──

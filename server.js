@@ -9,7 +9,7 @@ const crypto = require('crypto');
 
 const DEFAULT_CONFIG = {
   port: 3000,
-  channelTimeoutMs: 10000,
+  channelTimeoutMs: 5000,
   scatterDelayMs: 1500,
   disconnectGraceMs: 3000,
   wardenSpinChance: 1.0,
@@ -64,6 +64,27 @@ const ROLE_NAMES = {
   seer: 'The Seer',
   warden: 'The Warden'
 };
+
+// Numbered arcane backlash table. A failed channel attempt assigns two
+// connected players one effect each.
+const BACKLASH_EFFECTS = new Map([
+  [1, 'Fractured Mind. You take 4d6 psychic damage, and your hit point maximum is reduced by the same amount until the end of your next long rest.'],
+  [2, 'Withered Gift. Your spellcasting ability score is reduced by 1 until the end of your next long rest. Greater restoration also ends the reduction.'],
+  [3, 'Stolen Voice. You become mute for 24 hours. You cannot cast spells with verbal components during this time.'],
+  [4, 'Arcane Exhaustion. You gain one level of exhaustion until the end of your next long rest.'],
+  [5, 'Spellburn. You lose your highest-level unexpended spell slot and cannot regain it until the end of your next long rest. If you have no spell slots remaining, your hit point maximum is instead reduced by 3d6 until the end of your next long rest.'],
+  [6, 'Unstable Casting. Until the end of your next long rest, whenever you cast a leveled spell, roll a d6. On a 1, you take force damage equal to twice the spell’s level.'],
+  [7, 'Shattered Concentration. Until the end of your next long rest, you have disadvantage on Constitution saving throws made to maintain concentration.'],
+  [8, 'Magical Vulnerability. Until the end of your next long rest, you have disadvantage on saving throws against spells and other magical effects.'],
+  [9, 'Weave Rejection. For 24 hours, you cannot regain hit points through magical healing. Nonmagical healing and temporary hit points still function normally.'],
+  [10, 'Dislocated Presence. For 24 hours, you subtract 1d4 from all attack rolls and saving throws as your body flickers slightly out of phase.'],
+  [11, 'Arcane Mark. A visible, luminous sigil appears on your face for 24 hours. During that time, you have disadvantage on Charisma (Deception) and Dexterity (Stealth) checks, and creatures have advantage on checks made to identify you.'],
+  [12, 'Mongoose Metamorphosis. You are transformed into a mongoose for 24 hours, as if affected by polymorph. The transformation ends early if you are reduced to 0 hit points, or if dispel magic, remove curse, or a similar effect is successfully used on you. Your equipment merges into the new form.'],
+  [13, 'Arcane Amnesia. One randomly determined prepared or known spell becomes inaccessible until the end of your next long rest. You cannot cast it or replace it during this time.'],
+  [14, 'Lead-Filled Limbs. Your speed is reduced by 10 feet, and you have disadvantage on Dexterity checks until the end of your next long rest.'],
+  [15, 'Leaking Magic. For 24 hours, you shed bright light in a 10-foot radius and dim light for another 10 feet. You cannot become invisible or benefit from being hidden.'],
+  [16, 'Borrowed Shadow. Your shadow animates and works against you for 24 hours. You have disadvantage on Dexterity (Stealth) checks, and the first attack roll made against you during each combat has advantage.'],
+]);
 
 // Each ring has schools in a different random order.
 // Solution schools loaded from config.json (target school for each ring, outer→inner).
@@ -275,6 +296,7 @@ function getStateForClient() {
       role: p.role,
       ringIndex: p.ringIndex,
       connected: p.connected,
+      backlashes: p.backlashes || [],
     })),
     ringSchools: RING_SCHOOLS,
     categories: CATEGORIES,
@@ -302,11 +324,13 @@ function getDmState() {
       roleName: ROLE_NAMES[p.role],
       ringIndex: p.ringIndex,
       connected: p.connected,
+      backlashes: p.backlashes || [],
     })),
     log: gameState.log.slice(-50),
     channeling: Array.from(channelWindow.presses.keys()),
     schools: SCHOOLS,
     categories: CATEGORIES,
+    backlashEffects: [...BACKLASH_EFFECTS].map(([number, effect]) => ({ number, effect })),
     serverIP: getLocalIP(),
     serverPort: PORT,
   };
@@ -326,6 +350,35 @@ function addLog(msg) {
 function getNextRole() {
   const taken = new Set(Object.values(gameState.players).map(p => p.role));
   return ROLES.find(r => !taken.has(r)) || null;
+}
+
+function assignBacklashes() {
+  const connectedPlayers = Object.values(gameState.players).filter(p => p.connected);
+
+  // Shuffle a copy, then punish at most two of the currently connected roles.
+  for (let i = connectedPlayers.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [connectedPlayers[i], connectedPlayers[j]] = [connectedPlayers[j], connectedPlayers[i]];
+  }
+
+  return connectedPlayers.slice(0, 2).map(player => {
+    if (!player.backlashHistory) player.backlashHistory = new Set();
+
+    let available = [...BACKLASH_EFFECTS.keys()].filter(number => !player.backlashHistory.has(number));
+    if (available.length === 0) {
+      player.backlashHistory.clear();
+      available = [...BACKLASH_EFFECTS.keys()];
+    }
+
+    const number = available[Math.floor(Math.random() * available.length)];
+    player.backlashHistory.add(number);
+    const backlash = { number, effect: BACKLASH_EFFECTS.get(number) };
+    if (!player.backlashes) player.backlashes = [];
+    player.backlashes.push(backlash);
+    addLog(`${ROLE_NAMES[player.role]} suffers Backlash #${number}`);
+
+    return { role: player.role, ...backlash };
+  });
 }
 
 function handleChannel(token) {
@@ -368,12 +421,14 @@ function resolveChannel() {
   if (pressCount < connectedCount) {
     gameState.phase = 'playing';
     gameState.attemptCount++;
+    const backlashes = assignBacklashes();
     addLog(`Channel failed — only ${pressCount}/${connectedCount} pressed`);
     broadcastAll({
       type: 'channel_result',
       success: false,
       hint: HINTS.channel_not_unified,
       nearSuccess: false,
+      backlashes,
     });
     scatterRings();
     pushDmState();
@@ -394,6 +449,7 @@ function resolveChannel() {
 
   // Failure — send 1-2 hints
   gameState.phase = 'playing';
+  const backlashes = assignBacklashes();
   const hintsToSend = errors.slice(0, gameState.attemptCount >= 5 ? 3 : 2);
   const hintTexts = hintsToSend.map(e => HINTS[e]);
 
@@ -404,6 +460,7 @@ function resolveChannel() {
     hints: hintTexts,
     nearSuccess: false,
     errorCount: errors.length,
+    backlashes,
   });
 
   scatterRings();
@@ -464,7 +521,14 @@ wss.on('connection', (ws, req) => {
     }
     token = crypto.randomUUID();
     const ringIndex = ROLES.indexOf(role);
-    gameState.players[token] = { ws, role, ringIndex, connected: true };
+    gameState.players[token] = {
+      ws,
+      role,
+      ringIndex,
+      connected: true,
+      backlashes: [],
+      backlashHistory: new Set(),
+    };
     ws._token = token;
 
     if (gameState.phase === 'waiting' && Object.keys(gameState.players).length >= 1) {
